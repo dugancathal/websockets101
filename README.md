@@ -122,3 +122,29 @@ via TLS. __This is the minimum you should do.__
 Because all the headers are passed through normally, you can use the standard
 Authorization header to verify access on the initial handshake using something
 like a bearer token, etc.
+
+# Gotchas
+
+## In Software
+
+Dealing with websockets in Ruby is interesting. Because of the nature of the
+messaging you're dealing with, Websockets should be asynchronous (or at least
+really fast). To make this work, the Rubyist that wrote Faye used EventMachine
+which is an asynchronous framework for writing Ruby.
+
+What this means for you is, any time that you need to add logic to your Faye
+server (be it auth, message sanitization/validation, whatever), you have to
+start thinking in async. There are libraries out there for EventMachine that
+provide async support for HTTP, Redis, and other datastores.
+
+## In Infrastructure
+
+You're now dealing with a new protocol; it's layered over TCP, but nevertheless,
+it's not HTTP. You must, therefore, make sure that your infrastructure isn't
+doing something silly like ignoring "random" TCP connections.
+
+This usually means ensuring that your load balancers are configured properly
+(sticky connections are one "normal" piece of this). Most HTTP servers support
+SSL offloading so it should be a relatively simple task to change to wss and
+then route to your backend (use something like nginx >=1.4.0).
+
